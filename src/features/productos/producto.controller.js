@@ -25,11 +25,14 @@ const getProductoById = async (req, res) => {
 
 const createProducto = async (req, res) => {
   try {
-    const { nombre, sku, precio, stock, descripcion, imagenUrl, categoria, marca } = req.body;
+    const { nombre, sku, precio, stock, descripcion, categoria, marca } = req.body;
 
     if (!nombre || !sku || precio === undefined || !categoria || !marca) {
       return res.status(400).json({ mensaje: 'Nombre, SKU, precio, categoría y marca son requeridos' });
     }
+
+    // Si viene un archivo subido vía Cloudinary usa req.file.path, de lo contrario evalúa req.body.imagenUrl
+    const imagenUrl = req.file ? req.file.path : (req.body.imagenUrl || '');
 
     const nuevoProducto = new Producto({
       nombre,
@@ -37,13 +40,19 @@ const createProducto = async (req, res) => {
       precio: Number(precio),
       stock: stock ? Number(stock) : 0,
       descripcion: descripcion || '',
-      imagenUrl: imagenUrl || '',
+      imagenUrl,
       categoria,
       marca
     });
 
     const productoGuardado = await nuevoProducto.save();
-    res.status(201).json(productoGuardado);
+    
+    // Devolvemos el producto con sus relaciones pobladas para el frontend
+    const productoPoblado = await Producto.findById(productoGuardado._id)
+      .populate('categoria', 'nombre descripcion')
+      .populate('marca', 'nombre paisOrigen');
+
+    res.status(201).json(productoPoblado);
   } catch (error) {
     res.status(500).json({ mensaje: 'Error al guardar el producto', error: error.message });
   }
@@ -51,9 +60,20 @@ const createProducto = async (req, res) => {
 
 const updateProducto = async (req, res) => {
   try {
+    const updateData = { ...req.body };
+
+    // Si la petición es multipart/form-data, parseamos números
+    if (updateData.precio !== undefined) updateData.precio = Number(updateData.precio);
+    if (updateData.stock !== undefined) updateData.stock = Number(updateData.stock);
+
+    // Si se sube un nuevo archivo en el request, actualizamos la imagenUrl
+    if (req.file) {
+      updateData.imagenUrl = req.file.path;
+    }
+
     const productoActualizado = await Producto.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     ).populate('categoria marca');
 

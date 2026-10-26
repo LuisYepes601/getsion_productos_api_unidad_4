@@ -8,11 +8,9 @@ const productoRoutes = require('./features/productos/producto.routes');
 
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Registro de endpoints de las features
 app.use('/api/auth', authRoutes);
 app.use('/api/categorias', categoriaRoutes);
 app.use('/api/marcas', marcaRoutes);
