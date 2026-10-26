@@ -16,4 +16,13 @@ app.use('/api/categorias', categoriaRoutes);
 app.use('/api/marcas', marcaRoutes);
 app.use('/api/productos', productoRoutes);
 
+// Manejador global de errores (intercepta fallos de Multer/Cloudinary o del servidor)
+app.use((err, req, res, next) => {
+  console.error('❌ Error en el servidor:', err);
+  res.status(500).json({
+    mensaje: 'Error interno en el servidor o subida a Cloudinary',
+    error: err.message || err,
+  });
+});
+
 module.exports = app;

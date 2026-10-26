@@ -10,9 +10,11 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'inventario_productos',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+  params: async (req, file) => {
+    return {
+      folder: 'inventario_productos',
+      resource_type: 'auto', // Permite procesar dinámicamente cualquier formato enviado por Flutter
+    };
   },
 });
 
