@@ -31,7 +31,7 @@ const createProducto = async (req, res) => {
       return res.status(400).json({ mensaje: 'Nombre, SKU, precio, categoría y marca son requeridos' });
     }
 
-    // Si viene un archivo subido vía Cloudinary usa req.file.path, de lo contrario evalúa req.body.imagenUrl
+    // Si viene archivo en la petición, req.file.path contiene la URL de Cloudinary
     const imagenUrl = req.file ? req.file.path : (req.body.imagenUrl || '');
 
     const nuevoProducto = new Producto({
@@ -47,7 +47,6 @@ const createProducto = async (req, res) => {
 
     const productoGuardado = await nuevoProducto.save();
     
-    // Devolvemos el producto con sus relaciones pobladas para el frontend
     const productoPoblado = await Producto.findById(productoGuardado._id)
       .populate('categoria', 'nombre descripcion')
       .populate('marca', 'nombre paisOrigen');
@@ -62,11 +61,10 @@ const updateProducto = async (req, res) => {
   try {
     const updateData = { ...req.body };
 
-    // Si la petición es multipart/form-data, parseamos números
     if (updateData.precio !== undefined) updateData.precio = Number(updateData.precio);
     if (updateData.stock !== undefined) updateData.stock = Number(updateData.stock);
 
-    // Si se sube un nuevo archivo en el request, actualizamos la imagenUrl
+    // Si se adjunta un nuevo archivo, actualizamos el campo imagenUrl
     if (req.file) {
       updateData.imagenUrl = req.file.path;
     }
